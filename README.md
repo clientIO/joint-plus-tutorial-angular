@@ -41,4 +41,4 @@ Your demo is now ready to start.
 npm start
 ```
 
-Your should be able to view the demo at `http://localhost:4200`.
+You should be able to view the demo at `http://localhost:4200`.
