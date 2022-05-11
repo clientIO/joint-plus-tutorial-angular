@@ -1,0 +1,7 @@
+<mat-tab-group #tabGroup mat-align-tabs="center" class="mat-tab-fill-height" (selectedTabChange)="onTabChange($event)">
+    <ng-container *ngFor="let tab of tabs; let index = index">
+        <mat-tab [label]="tab.title">
+            <app-tab #tab [tab]="tab" (onLinkClick)="onLinkClick($event)"></app-tab>
+        </mat-tab>
+    </ng-container>
+</mat-tab-group>

@@ -6,3 +6,10 @@ body {
   box-sizing: border-box;
   margin: 0;
 }
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.mat-tab-group.mat-tab-fill-height .mat-tab-body-wrapper {
+  flex: 1 1 100%;
+}
