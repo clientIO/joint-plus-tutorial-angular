@@ -6,7 +6,7 @@
         <mat-tab>
             <ng-template mat-tab-label>
                 {{ tab.title }}
-                <button mat-icon-button mat-raised-button class="tabs-button" (click)="removeTab(index)">
+                <button attr.data-tooltip='Remove "{{tab.title}}" tab' data-tooltip-position="top" mat-icon-button mat-raised-button class="tabs-button" (click)="removeTab(index)">
                     <mat-icon>clear</mat-icon>
                 </button>
             </ng-template>

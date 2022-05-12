@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { ui } from '@clientio/rappid';
 import { TabComponent } from '../tab/tab.component';
@@ -12,14 +12,28 @@ import { Tab } from '../tabs.models';
 })
 export class TabsContainerComponent implements OnInit, AfterViewInit {
   tabs: Tab[];
+
   @ViewChild('tabGroup') tabGroup: MatTabGroup;
   @ViewChildren('tab') tabComponents: QueryList<TabComponent>;
 
   theme = 'material';
 
-  constructor(private tabsDataService: TabsDataService) {
+  constructor(
+    private tabsDataService: TabsDataService,
+    private elRef: ElementRef) {
     this.tabs = this.tabsDataService.getTabs();
   }
+
+  tooltip = new ui.Tooltip({
+    theme: this.theme,
+    rootTarget: this.elRef.nativeElement,
+    container: this.elRef.nativeElement,
+    target: '[data-tooltip]',
+    direction: ui.Tooltip.TooltipArrowPosition.Auto,
+    position: ui.Tooltip.TooltipPosition.Top,
+    padding: 10,
+    animation: true
+  });
 
   ngOnInit(): void {
   }
