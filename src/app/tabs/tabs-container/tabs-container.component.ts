@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
+import { ui } from '@clientio/rappid';
 import { TabComponent } from '../tab/tab.component';
 import { TabsDataService } from '../tabs-data.service';
 import { Tab } from '../tabs.models';
@@ -13,6 +14,8 @@ export class TabsContainerComponent implements OnInit, AfterViewInit {
   tabs: Tab[];
   @ViewChild('tabGroup') tabGroup: MatTabGroup;
   @ViewChildren('tab') tabComponents: QueryList<TabComponent>;
+
+  theme = 'material';
 
   constructor(private tabsDataService: TabsDataService) {
     this.tabs = this.tabsDataService.getTabs();
@@ -40,10 +43,23 @@ export class TabsContainerComponent implements OnInit, AfterViewInit {
     const index = this.tabs.findIndex(tab => tab.id === id);
     if (index !== -1) {
       this.tabGroup.selectedIndex = index;
+    } else {
+      const message = new ui.FlashMessage({
+        theme: this.theme,
+        content: `Invalid sub-process ID: ${id}`,
+      });
+      message.open();
     }
   }
 
   removeTab(index: number) {
+    if (this.tabGroup.selectedIndex === index && this.tabs.length > 1) {
+      if (index === this.tabs.length - 1) {
+        this.tabComponents.get(index - 1)?.focus();
+      } else {
+        this.tabComponents.get(index + 1)?.focus();
+      }
+    }
     this.tabs.splice(index, 1);
   }
 
