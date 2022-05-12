@@ -64,9 +64,10 @@ export class TabsContainerComponent implements OnInit, AfterViewInit {
   }
 
   addTab() {
+    const nextIndex = this.tabs.length + 1;
     this.tabs.push({
-      id: 'tab-' + this.tabs.length,
-      title: 'Tab ' + this.tabs.length,
+      id: 'tab-' + nextIndex,
+      title: 'Tab ' + nextIndex,
       graph: null
     });
     this.tabGroup.selectedIndex = this.tabs.length - 1;
