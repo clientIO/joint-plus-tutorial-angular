@@ -23,18 +23,36 @@ export class TabsContainerComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.tabGroup.selectedIndex !== null) {
-      this.tabComponents.get(this.tabGroup.selectedIndex)?.setFocus();
+      this.tabComponents.get(this.tabGroup.selectedIndex)?.focus();
     }
   }
 
   onTabChange(evt: MatTabChangeEvent) {
-    this.tabComponents.get(evt.index)?.setFocus();
+    this.tabComponents.get(evt.index)?.focus();
+    this.tabComponents.forEach((tab, i) => {
+      if (i !== evt.index) {
+        tab.blur();
+      }
+    });
   }
 
   onLinkClick(id: string) {
     const index = this.tabs.findIndex(tab => tab.id === id);
-    if (index) {
+    if (index !== -1) {
       this.tabGroup.selectedIndex = index;
     }
+  }
+
+  removeTab(index: number) {
+    this.tabs.splice(index, 1);
+  }
+
+  addTab() {
+    this.tabs.push({
+      id: 'tab-' + this.tabs.length,
+      title: 'Tab ' + this.tabs.length,
+      graph: null
+    });
+    this.tabGroup.selectedIndex = this.tabs.length - 1;
   }
 }

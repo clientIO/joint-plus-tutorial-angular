@@ -74,18 +74,10 @@ export class TabComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-  }
-
-  setFocus(): void {
-    if (this.paper.isFrozen()) {
-      this.initPaper();
-    } else {
-      this.scroller.scrollToContent();
-    }
-  }
-
-  initPaper() {
     this.canvas.nativeElement.appendChild(this.scroller.el);
+  }
+
+  focus(): void {
     if (this.focusPoint) {
       this.scroller.center(this.focusPoint.x, this.focusPoint.y);
     } else {
@@ -94,4 +86,10 @@ export class TabComponent implements OnInit, AfterViewInit {
     this.paper.unfreeze();
   }
 
+  blur(): void {
+    if (!this.paper.isFrozen()) {
+      this.focusPoint = this.scroller.getVisibleArea().center().toJSON();
+      this.paper.freeze();
+    }
+  }
 }
