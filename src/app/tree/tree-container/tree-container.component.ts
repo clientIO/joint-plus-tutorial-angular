@@ -1,6 +1,5 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
-import { AfterViewInit, Component, OnInit, QueryList, ViewChild, ViewChildren, ElementRef } from '@angular/core';
-import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
+import { AfterViewInit, Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { dia, highlighters, shapes, ui } from '@clientio/rappid';
 import { TreeDataService } from '../tree-data.service';
@@ -124,8 +123,7 @@ export class TreeContainerComponent implements OnInit, AfterViewInit {
     if (this.selectedNode && this.selectedNode.id !== node.id) {
       this.selectedNode.selected = false;
     }
-    const graphId = node.id.split('-')[0];
-    const cellId = node.id.split('-')[1];
+    const [ graphId, cellId ] = node.id.split('-');
     if (graphId !== this.graph.id) {
       this.graph.fromJSON(<dia.Graph>this.nodes[graphId].graph);
     }
