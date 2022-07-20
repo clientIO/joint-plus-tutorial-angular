@@ -23,9 +23,10 @@ export class AppComponent implements OnInit, AfterViewInit {
         },
         frozen: true,
         async: true,
+        sorting: dia.Paper.sorting.APPROX,
         cellViewNamespace: shapes
     });
-    
+
     const scroller = this.scroller = new ui.PaperScroller({
         paper,
         autoResizePaper: true,
