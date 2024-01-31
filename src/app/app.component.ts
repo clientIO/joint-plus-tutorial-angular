@@ -1,5 +1,5 @@
 import { AfterViewInit, OnInit, Component, ElementRef, ViewChild } from '@angular/core';
-import { dia, ui, shapes } from '@clientio/rappid';
+import { dia, ui, shapes } from '@joint/plus';
 
 @Component({
   selector: 'app-root',
