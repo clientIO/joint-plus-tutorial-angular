@@ -8,7 +8,7 @@
   "files": [
     "src/main.ts",
     "src/polyfills.ts",
-    "node_modules/@clientio/rappid/index.ts"
+    "node_modules/@joint/plus/index.ts"
   ],
   "include": [
     "src/**/*.d.ts"
