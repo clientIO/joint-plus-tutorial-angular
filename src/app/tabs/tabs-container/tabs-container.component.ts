@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
-import { ui } from '@clientio/rappid';
+import { ui } from '@joint/plus';
 import { TabComponent } from '../tab/tab.component';
 import { TabsDataService } from '../tabs-data.service';
 import { Tab } from '../tabs.models';
