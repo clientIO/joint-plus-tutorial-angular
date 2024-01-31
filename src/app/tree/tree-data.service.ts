@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TreeNode } from './tree.models';
-import { dia, shapes } from '@clientio/rappid';
+import { dia, shapes } from '@joint/plus';
 
 const data: any[] = [
   {
