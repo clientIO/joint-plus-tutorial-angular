@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { dia, shapes, ui } from '@clientio/rappid';
+import { dia, shapes, ui } from '@joint/plus';
 import { HyperlinkHighlighter } from '../hyperlink-highlighter';
 import { Tab } from '../tabs.models';
 
