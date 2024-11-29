@@ -1,6 +1,4 @@
-// @ts-nocheck
-
-import { AvoidLib, ShapeRef, ConnRef, Router } from 'libavoid-js';
+import { AvoidLib, ShapeRef, ConnRef, Router, PolyLine } from 'libavoid-js';
 import { g, util, mvc, dia } from '@joint/core';
 
 const defaultPin = 1;
@@ -18,8 +16,9 @@ export class AvoidRouter {
       edgeRefs: { [key: string]: ConnRef };
       pinIds: { [key: string]: number };
       linksByPointer: { [key: number]: dia.Link };
-      avoidConnectorCallback: (connRef: ConnRef) => void;
+      avoidConnectorCallback: (connRefPtr: number) => void;
       id: number;
+      listenersEnabled: boolean;
       margin: number;
       portOverflow: number;
       avoidRouter: Router;
@@ -30,7 +29,7 @@ export class AvoidRouter {
         await AvoidLib.load('../assets/wasm/libavoid.wasm');
     }
 
-    constructor(graph, options = {}) {
+    constructor(graph: dia.Graph, options = {}) {
         const Avoid = AvoidLib.getInstance();
 
         this.graph = graph;
@@ -67,12 +66,14 @@ export class AvoidRouter {
         // we don't want to create a new function bind to a specific link
         // for every connRef callback (see `avoidConnectorCallback`)
         this.linksByPointer = {
-            // [connRef.g]: link
+            // [Avoid.getPointer(connRef)]: link
         };
 
         this.avoidConnectorCallback = this.onAvoidConnectorChange.bind(this);
 
         this.id = 100000;
+
+        this.listenersEnabled = false;
 
         this.createAvoidRouter(options);
     }
@@ -274,7 +275,7 @@ export class AvoidRouter {
             connRef = edgeRefs[link.id];
         } else {
             connRef = new Avoid.ConnRef(this.avoidRouter);
-            this.linksByPointer[connRef.g] = link;
+            this.linksByPointer[Avoid.getPointer(connRef)] = link;
         }
 
         connRef.setSourceEndpoint(sourceConnEnd);
@@ -300,27 +301,28 @@ export class AvoidRouter {
         return connRef;
     }
 
-    deleteConnector(link) {
+    deleteConnector(link: dia.Link) {
+        const Avoid = AvoidLib.getInstance();
         const connRef = this.edgeRefs[link.id];
         if (!connRef) return;
         this.avoidRouter.deleteConnector(connRef);
-        delete this.linksByPointer[connRef.g];
+        delete this.linksByPointer[Avoid.getPointer(connRef)];
         delete this.edgeRefs[link.id];
     }
 
-    deleteShape(element) {
+    deleteShape(element: dia.Element) {
         const shapeRef = this.shapeRefs[element.id];
         if (!shapeRef) return;
         this.avoidRouter.deleteShape(shapeRef);
         delete this.shapeRefs[element.id];
     }
 
-    getLinkAnchorDelta(element, portId, point) {
+    getLinkAnchorDelta(element: dia.Element, portId: string | null, point: g.Point) {
         let anchorPosition;
         const bbox = element.getBBox();
         if (portId) {
             const port = element.getPort(portId);
-            const portPosition = element.getPortsPositions(port.group)[portId];
+            const portPosition = element.getPortsPositions(port.group as string)[portId];
             anchorPosition = element.position().offset(portPosition);
         } else {
             anchorPosition = bbox.center();
@@ -329,7 +331,7 @@ export class AvoidRouter {
     }
 
     // This method is used to route a link.
-    routeLink(link) {
+    routeLink(link: dia.Link) {
         const connRef = this.edgeRefs[link.id];
         if (!connRef) return;
 
@@ -343,17 +345,17 @@ export class AvoidRouter {
         const sourceElement = link.getSourceElement();
         const targetElement = link.getTargetElement();
         const sourceAnchorDelta = this.getLinkAnchorDelta(
-            sourceElement,
+            sourceElement as dia.Element,
             sourcePortId,
             sourcePoint
         );
         const targetAnchorDelta = this.getLinkAnchorDelta(
-            targetElement,
+            targetElement as dia.Element,
             targetPortId,
             targetPoint
         );
 
-        const linkAttributes = {
+        const linkAttributes: dia.Link.Attributes = {
             source: {
                 id: sourceId,
                 port: sourcePortId || null,
@@ -373,12 +375,13 @@ export class AvoidRouter {
         if (
             this.isRouteValid(
                 route,
-                sourceElement,
-                targetElement,
+                sourceElement as dia.Element,
+                targetElement as dia.Element,
                 sourcePortId,
                 targetPortId
             )
         ) {
+            link.attr('line/stroke', 'black')
             // We have a valid route.
             // We update the link with the route.
             linkAttributes.source.anchor.args = {
@@ -392,11 +395,13 @@ export class AvoidRouter {
             linkAttributes.vertices = this.getVerticesFromAvoidRoute(route);
             linkAttributes.router = null;
         } else {
+            console.log('fail')
+            link.attr('line/stroke', 'red')
             // Fallback route (we use the `rightAngle` router for the fallback route)
             // The right angle automatic directions works the same way as in this example.
             linkAttributes.vertices = [];
             linkAttributes.router = {
-                name: 'rightAngle',
+                name: 'manhattan',
                 args: {
                     // The margin is computed from the border of the port in case
                     // of the `rightAngle` router.
@@ -404,7 +409,9 @@ export class AvoidRouter {
                     // of the port.
                     // Note: it depends on what portion of the port is overlapping
                     // the element. In this example, it is exactly the half of the port.
-                    margin: this.margin - this.portOverflow,
+                    step: 20,
+                    padding: this.margin - this.portOverflow,
+                    maximumLoops: 50000
                 },
             };
         }
@@ -422,13 +429,21 @@ export class AvoidRouter {
 
     // This method is used to reset the link to a straight line
     // (if the link is not connected to an element).
-    resetLink(link) {
+    resetLink(link: dia.Link) {
         const newAttributes = util.cloneDeep(link.attributes);
         newAttributes.vertices = [];
         newAttributes.router = null;
         delete newAttributes.source.anchor;
         delete newAttributes.target.anchor;
         link.set(newAttributes, { avoidRouter: true });
+    }
+
+    enableListeners() {
+        this.listenersEnabled = true;
+    }
+
+    disableListeners() {
+        this.listenersEnabled = false;
     }
 
     // Start listening to the graph changes and automatically
@@ -452,26 +467,29 @@ export class AvoidRouter {
         delete this.graphListener;
     }
 
-    onCellRemoved(cell) {
+    onCellRemoved(cell: dia.Cell) {
+        if (!this.listenersEnabled) return;
         if (cell.isElement()) {
-            this.deleteShape(cell);
+            this.deleteShape(cell as dia.Element);
         } else {
-            this.deleteConnector(cell);
+            this.deleteConnector(cell as dia.Link);
         }
         this.avoidRouter.processTransaction();
     }
 
-    onCellAdded(cell) {
+    onCellAdded(cell: dia.Cell) {
+        if (!this.listenersEnabled) return;
         if (cell.isElement()) {
-            this.updateShape(cell);
+            this.updateShape(cell as dia.Element);
         } else {
-            this.updateConnector(cell);
+            this.updateConnector(cell as dia.Link);
         }
         this.avoidRouter.processTransaction();
     }
 
-    onCellChanged(cell, opt) {
+    onCellChanged(cell: dia.Cell, opt: dia.Cell.Options) {
         if (opt.avoidRouter) return;
+        if (!this.listenersEnabled) return;
         let needsRerouting = false;
         if ('source' in cell.changed || 'target' in cell.changed) {
             if (!cell.isLink()) return;
@@ -496,7 +514,7 @@ export class AvoidRouter {
         }
     }
 
-    onAvoidConnectorChange(connRefPtr) {
+    onAvoidConnectorChange(connRefPtr: number) {
         const link = this.linksByPointer[connRefPtr];
         if (!link) return;
         this.routeLink(link);
@@ -508,13 +526,13 @@ export class AvoidRouter {
     // Unfortunately, the libavoid does not provide a method to check
     // if the route is valid, so we must use heuristics.
     isRouteValid(
-        route,
-        sourceElement,
-        targetElement,
-        sourcePortId,
-        targetPortId
+        route: PolyLine,
+        sourceElement: dia.Element,
+        targetElement: dia.Element,
+        sourcePortId: string | null,
+        targetPortId: string | null
     ) {
-        const size = route.size();
+        /*const size = route.size();
         if (size > 2) {
             // when the libavoid route has more than 2 points,
             // we consider it valid.
@@ -544,7 +562,7 @@ export class AvoidRouter {
         ) {
             // The target point is inside the source element.
             return false;
-        }
+        }*/
 
         return true;
     }
