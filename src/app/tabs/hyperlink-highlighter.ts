@@ -19,7 +19,7 @@ export class HyperlinkHighlighter extends dia.HighlighterView<HyperlinkHighlight
     }
 
     static addToLabel(element: dia.Element, paper: dia.Paper, path: string) {
-        return this.add(
+        return (<typeof dia.HighlighterView>HyperlinkHighlighter).add(
             element.findView(paper),
             // The element selector pointing to the SVGText sub-element
             'label',
@@ -29,4 +29,4 @@ export class HyperlinkHighlighter extends dia.HighlighterView<HyperlinkHighlight
             { path }
         );
     }
-  }
+}
